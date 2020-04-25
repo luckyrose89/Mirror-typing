@@ -178,43 +178,87 @@
     </p>
 
     <script>
-      // Get all of the headings
-      var headings = document.querySelectorAll("h2");
+      // Create function to wrap all code
+      var tableOfContents = function(options) {
+        //
+        // Variables
+        //
 
-      // Get the table of contents container
-      var toc = document.querySelector("#toc");
+        var defaults = {
+          selector: "h2",
+          target: "#toc",
+          addLinks: true,
+          heading: "Table of Contents"
+        };
 
-      /**
-       * Get the heading ID (or create one if it doesn't have one)
-       * @param  {Node}   elem The element
-       * @return {String}      The ID
-       */
-      var getID = function(elem) {
-        // If the element doesn't have an ID, create one
-        if (!elem.id) {
-          elem.id = elem.textContent.replace(new RegExp(" ", "g"), "-");
-        }
+        var headings, toc, settings;
 
-        // Get the element ID
-        return elem.id;
+        //
+        // Methods
+        //
+
+        /**
+         * Get the heading ID (or create one if it doesn't have one)
+         * @param  {Node}   elem The element
+         * @return {String}      The ID
+         */
+        var getID = function(elem) {
+          // If the element doesn't have an ID, create one
+          if (!elem.id) {
+            elem.id = elem.textContent.replace(new RegExp(" ", "g"), "-");
+          }
+
+          // Get the element ID
+          return elem.id;
+        };
+
+        // Create method to combine DOM rendering functions
+        var createTOC = function() {
+          // Loop through all of the headings and create an array of table of content items
+          var tocItems = Array.prototype.map.call(headings, function(heading) {
+            if (settings.addLinks) {
+              return (
+                '<li><a href="#' +
+                getID(heading) +
+                '">' +
+                heading.textContent +
+                "</a></li>"
+              );
+            } else {
+              return "<li>" + heading.textContent + "</li>";
+            }
+          });
+
+          // Inject table of contents into the DOM
+          if (toc && tocItems.length > 0) {
+            toc.innerHTML =
+              "<h2>" +
+              settings.heading +
+              "</h2>" +
+              "<ul>" +
+              tocItems.join("") +
+              "</ul>";
+          }
+        };
+
+        //
+        // Inits & event Listeners
+        //
+
+        settings = Object.assign({}, defaults, options);
+
+        // Get all of the headings
+        headings = document.querySelectorAll(settings.selector);
+
+        // Get the table of contents container
+        toc = document.querySelector(settings.target);
+
+        //Create table of contents
+        createTOC();
       };
 
-      // Loop through all of the headings and create an array of table of content items
-      var tocItems = Array.prototype.map.call(headings, function(heading) {
-        return (
-          '<li><a href="#' +
-          getID(heading) +
-          '">' +
-          heading.textContent +
-          "</a></li>"
-        );
-      });
-
-      // Inject table of contents into the DOM
-      if (toc && tocItems.length > 0) {
-        toc.innerHTML =
-          "<h2>Table of Contents</h2>" + "<ul>" + tocItems.join("") + "</ul>";
-      }
+      // Run the script
+      tableOfContents();
     </script>
   </body>
 </html>
