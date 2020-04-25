@@ -188,7 +188,8 @@
           selector: "h2",
           target: "#toc",
           addLinks: true,
-          heading: "Table of Contents"
+          heading: "Table of Contents",
+          callbacks: function() {}
         };
 
         var headings, toc, settings;
@@ -239,6 +240,16 @@
               tocItems.join("") +
               "</ul>";
           }
+
+          var event = new CustomEvent("tocCreated", {
+            bubbles: true,
+            detail: {
+              toc: toc,
+              headings: headings
+            }
+          });
+
+          toc.dispatchEvent(event);
         };
 
         //
@@ -256,6 +267,19 @@
         //Create table of contents
         createTOC();
       };
+
+      // Listen for custom events
+      window.addEventListener("tocCreated", function(event) {
+        console.log(event.target.querySelector("ul"));
+
+        // Get all list items
+        var listItems = document.querySelectorAll("li a");
+
+        // add arrow to each listItem
+        Array.prototype.forEach.call(listItems, function(item) {
+          item.innerHTML += " &rarr; ";
+        });
+      });
 
       // Run the script
       tableOfContents();
