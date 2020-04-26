@@ -179,7 +179,7 @@
 
     <script>
       // Create function to wrap all code
-      var tableOfContents = function(options) {
+      var tableOfContents = (function() {
         //
         // Variables
         //
@@ -192,6 +192,8 @@
           callbacks: function() {}
         };
 
+        var publicAPIMethods = {};
+
         var headings, toc, settings;
 
         //
@@ -203,7 +205,8 @@
          * @param  {Node}   elem The element
          * @return {String}      The ID
          */
-        var getID = function(elem) {
+
+        publicAPIMethods.getID = function(elem) {
           // If the element doesn't have an ID, create one
           if (!elem.id) {
             elem.id = elem.textContent.replace(new RegExp(" ", "g"), "-");
@@ -220,7 +223,7 @@
             if (settings.addLinks) {
               return (
                 '<li><a href="#' +
-                getID(heading) +
+                publicAPIMethods.getID(heading) +
                 '">' +
                 heading.textContent +
                 "</a></li>"
@@ -255,34 +258,28 @@
         //
         // Inits & event Listeners
         //
+        publicAPIMethods.init = function(options) {
+          // Merge user options into defaults
+          settings = Object.assign({}, defaults, options);
 
-        settings = Object.assign({}, defaults, options);
+          // Get all of the headings
+          headings = document.querySelectorAll(settings.selector);
 
-        // Get all of the headings
-        headings = document.querySelectorAll(settings.selector);
+          // Get the table of contents container
+          toc = document.querySelector(settings.target);
 
-        // Get the table of contents container
-        toc = document.querySelector(settings.target);
+          // Create the table of contents
+          createTOC();
+        };
 
-        //Create table of contents
-        createTOC();
-      };
+        //
+        // Return Public APIs
+        //
 
-      // Listen for custom events
-      window.addEventListener("tocCreated", function(event) {
-        console.log(event.target.querySelector("ul"));
-
-        // Get all list items
-        var listItems = document.querySelectorAll("li a");
-
-        // add arrow to each listItem
-        Array.prototype.forEach.call(listItems, function(item) {
-          item.innerHTML += " &rarr; ";
-        });
-      });
+        return publicAPIMethods;
+      })();
 
       // Run the script
-      tableOfContents();
     </script>
   </body>
 </html>
