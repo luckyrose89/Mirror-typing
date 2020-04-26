@@ -178,28 +178,36 @@
     </p>
 
     <script>
-      // Create function to wrap all code
-      var TableOfContents = (function() {
-        "use strict";
+      (function(root, factory) {
+        if (typeof define === "function" && define.amd) {
+          define([], function() {
+            return factory(root);
+          });
+        } else if (typeof exports === "object") {
+          module.exports = factory(root);
+        } else {
+          root.TableOfContents = factory(root);
+        }
+      })(
+        typeof global !== "undefined"
+          ? global
+          : typeof window !== "undefined"
+          ? window
+          : this,
+        function(window) {
+          "use strict";
 
-        /*
-        Setup contructor 
-        */
-        var Constructor = function() {
           //
           // Variables
           //
+
+          // Default settings
           var defaults = {
             selector: "h2",
-            target: "#toc",
             addLinks: true,
             heading: "Table of Contents",
-            callbacks: function() {}
+            callback: function() {}
           };
-
-          var publicAPIMethods = {};
-
-          var headings, toc, settings;
 
           //
           // Methods
@@ -210,8 +218,7 @@
            * @param  {Node}   elem The element
            * @return {String}      The ID
            */
-
-          publicAPIMethods.getID = function(elem) {
+          var getID = function(elem) {
             // If the element doesn't have an ID, create one
             if (!elem.id) {
               elem.id = elem.textContent.replace(new RegExp(" ", "g"), "-");
@@ -221,23 +228,26 @@
             return elem.id;
           };
 
-          // Create method to combine DOM rendering functions
-          var createTOC = function() {
+          /**
+           * Create the table of contents and inject it into the DOM
+           * @param  {NodeList} headings The heading elements
+           * @param  {Node} toc          The table of contents element
+           * @param  {Object} settings   The settings for this instantiation
+           */
+          var createTOC = function(headings, toc, settings) {
             // Loop through all of the headings and create an array of table of content items
             var tocItems = Array.prototype.map.call(headings, function(
               heading
             ) {
-              if (settings.addLinks) {
+              if (settings.addLinks)
                 return (
                   '<li><a href="#' +
-                  publicAPIMethods.getID(heading) +
+                  getID(heading) +
                   '">' +
                   heading.textContent +
                   "</a></li>"
                 );
-              } else {
-                return "<li>" + heading.textContent + "</li>";
-              }
+              return "<li>" + heading.textContent + "</li>";
             });
 
             // Inject table of contents into the DOM
@@ -251,67 +261,79 @@
                 "</ul>";
             }
 
-            var event = new CustomEvent("tocCreated", {
-              bubbles: true,
-              detail: {
-                toc: toc,
-                headings: headings
-              }
-            });
-
-            toc.dispatchEvent(event);
+            // Run our callback
+            settings.callback(toc);
           };
 
           /**
-           * Destroy an instance of plugin with publicAPIMethods
-           **/
+           * Setup the constructor
+           */
+          var Constructor = function(options, selector) {
+            //
+            // Variables
+            //
 
-          publicAPIMethods.destroy = function() {
-            // Make sure plugin has been initialized
-            if (!settings) return;
+            var publicAPIs = {};
+            var headings, toc, settings;
 
-            // Remove the table of contents
-            toc.innerHTML = "";
+            //
+            // Methods
+            //
 
-            // Reset variables
-            headings = null;
-            toc = null;
-            settings = null;
+            // Make the getID method public
+            publicAPIs.getID = getID;
+
+            /**
+             * Destroy the current initialization
+             */
+            publicAPIs.destroy = function() {
+              // Make sure plugin has been initialized
+              if (!settings) return;
+
+              // Remove the table of contents
+              toc.innerHTML = "";
+
+              // Reset variables
+              headings = null;
+              toc = null;
+              settings = null;
+            };
+
+            /**
+             * Initialize the plugin
+             * @param  {Object} options User options and customizations
+             */
+            publicAPIs.init = function(options, selector) {
+              // Destroy the current initialization
+              publicAPIs.destroy();
+
+              // Merge user options into defaults
+              settings = Object.assign({}, defaults, options);
+
+              // Get all of the headings
+              headings = document.querySelectorAll(settings.selector);
+
+              // Get the table of contents container
+              toc = document.querySelector(selector);
+
+              // Create the table of contents
+              createTOC(headings, toc, settings);
+            };
+
+            // Init the plugin
+            publicAPIs.init(options, selector);
+
+            //
+            // Return the Public APIs
+            //
+
+            return publicAPIs;
           };
-
-          //
-          // Inits & event Listeners
-          //
-          publicAPIMethods.init = function(options) {
-            // Destroy the current initialization
-            publicAPIMethods.destroy();
-
-            // Merge user options into defaults
-            settings = Object.assign({}, defaults, options);
-
-            // Get all of the headings
-            headings = document.querySelectorAll(settings.selector);
-
-            // Get the table of contents container
-            toc = document.querySelector(settings.target);
-
-            // Create the table of contents
-            createTOC();
-          };
-
-          //
-          // Return Public APIs
-          //
-
-          return publicAPIMethods;
-        };
-
-        return Constructor;
-      })();
-
+          return Constructor;
+        }
+      );
       // Run the script
-      var toc = new TableOfContents();
-      toc.init();
+      var toc = new TableOfContents({ heading: "on this page" }, "#toc");
     </script>
   </body>
 </html>
