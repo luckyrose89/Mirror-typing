@@ -255,10 +255,30 @@
           toc.dispatchEvent(event);
         };
 
+        /**
+         * Destroy an instance of plugin with publicAPIMethods
+         **/
+
+        publicAPIMethods.destroy = function() {
+          // Make sure plugin has been initialized
+          if (!settings) return;
+
+          // Remove the table of contents
+          toc.innerHTML = "";
+
+          // Reset variables
+          headings = null;
+          toc = null;
+          settings = null;
+        };
+
         //
         // Inits & event Listeners
         //
         publicAPIMethods.init = function(options) {
+          // Destroy the current initialization
+          publicAPIMethods.destroy();
+
           // Merge user options into defaults
           settings = Object.assign({}, defaults, options);
 
