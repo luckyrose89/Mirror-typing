@@ -179,127 +179,139 @@
 
     <script>
       // Create function to wrap all code
-      var tableOfContents = (function() {
-        //
-        // Variables
-        //
+      var TableOfContents = (function() {
+        "use strict";
 
-        var defaults = {
-          selector: "h2",
-          target: "#toc",
-          addLinks: true,
-          heading: "Table of Contents",
-          callbacks: function() {}
-        };
+        /*
+        Setup contructor 
+        */
+        var Constructor = function() {
+          //
+          // Variables
+          //
+          var defaults = {
+            selector: "h2",
+            target: "#toc",
+            addLinks: true,
+            heading: "Table of Contents",
+            callbacks: function() {}
+          };
 
-        var publicAPIMethods = {};
+          var publicAPIMethods = {};
 
-        var headings, toc, settings;
+          var headings, toc, settings;
 
-        //
-        // Methods
-        //
+          //
+          // Methods
+          //
 
-        /**
-         * Get the heading ID (or create one if it doesn't have one)
-         * @param  {Node}   elem The element
-         * @return {String}      The ID
-         */
+          /**
+           * Get the heading ID (or create one if it doesn't have one)
+           * @param  {Node}   elem The element
+           * @return {String}      The ID
+           */
 
-        publicAPIMethods.getID = function(elem) {
-          // If the element doesn't have an ID, create one
-          if (!elem.id) {
-            elem.id = elem.textContent.replace(new RegExp(" ", "g"), "-");
-          }
-
-          // Get the element ID
-          return elem.id;
-        };
-
-        // Create method to combine DOM rendering functions
-        var createTOC = function() {
-          // Loop through all of the headings and create an array of table of content items
-          var tocItems = Array.prototype.map.call(headings, function(heading) {
-            if (settings.addLinks) {
-              return (
-                '<li><a href="#' +
-                publicAPIMethods.getID(heading) +
-                '">' +
-                heading.textContent +
-                "</a></li>"
-              );
-            } else {
-              return "<li>" + heading.textContent + "</li>";
+          publicAPIMethods.getID = function(elem) {
+            // If the element doesn't have an ID, create one
+            if (!elem.id) {
+              elem.id = elem.textContent.replace(new RegExp(" ", "g"), "-");
             }
-          });
 
-          // Inject table of contents into the DOM
-          if (toc && tocItems.length > 0) {
-            toc.innerHTML =
-              "<h2>" +
-              settings.heading +
-              "</h2>" +
-              "<ul>" +
-              tocItems.join("") +
-              "</ul>";
-          }
+            // Get the element ID
+            return elem.id;
+          };
 
-          var event = new CustomEvent("tocCreated", {
-            bubbles: true,
-            detail: {
-              toc: toc,
-              headings: headings
+          // Create method to combine DOM rendering functions
+          var createTOC = function() {
+            // Loop through all of the headings and create an array of table of content items
+            var tocItems = Array.prototype.map.call(headings, function(
+              heading
+            ) {
+              if (settings.addLinks) {
+                return (
+                  '<li><a href="#' +
+                  publicAPIMethods.getID(heading) +
+                  '">' +
+                  heading.textContent +
+                  "</a></li>"
+                );
+              } else {
+                return "<li>" + heading.textContent + "</li>";
+              }
+            });
+
+            // Inject table of contents into the DOM
+            if (toc && tocItems.length > 0) {
+              toc.innerHTML =
+                "<h2>" +
+                settings.heading +
+                "</h2>" +
+                "<ul>" +
+                tocItems.join("") +
+                "</ul>";
             }
-          });
 
-          toc.dispatchEvent(event);
+            var event = new CustomEvent("tocCreated", {
+              bubbles: true,
+              detail: {
+                toc: toc,
+                headings: headings
+              }
+            });
+
+            toc.dispatchEvent(event);
+          };
+
+          /**
+           * Destroy an instance of plugin with publicAPIMethods
+           **/
+
+          publicAPIMethods.destroy = function() {
+            // Make sure plugin has been initialized
+            if (!settings) return;
+
+            // Remove the table of contents
+            toc.innerHTML = "";
+
+            // Reset variables
+            headings = null;
+            toc = null;
+            settings = null;
+          };
+
+          //
+          // Inits & event Listeners
+          //
+          publicAPIMethods.init = function(options) {
+            // Destroy the current initialization
+            publicAPIMethods.destroy();
+
+            // Merge user options into defaults
+            settings = Object.assign({}, defaults, options);
+
+            // Get all of the headings
+            headings = document.querySelectorAll(settings.selector);
+
+            // Get the table of contents container
+            toc = document.querySelector(settings.target);
+
+            // Create the table of contents
+            createTOC();
+          };
+
+          //
+          // Return Public APIs
+          //
+
+          return publicAPIMethods;
         };
 
-        /**
-         * Destroy an instance of plugin with publicAPIMethods
-         **/
-
-        publicAPIMethods.destroy = function() {
-          // Make sure plugin has been initialized
-          if (!settings) return;
-
-          // Remove the table of contents
-          toc.innerHTML = "";
-
-          // Reset variables
-          headings = null;
-          toc = null;
-          settings = null;
-        };
-
-        //
-        // Inits & event Listeners
-        //
-        publicAPIMethods.init = function(options) {
-          // Destroy the current initialization
-          publicAPIMethods.destroy();
-
-          // Merge user options into defaults
-          settings = Object.assign({}, defaults, options);
-
-          // Get all of the headings
-          headings = document.querySelectorAll(settings.selector);
-
-          // Get the table of contents container
-          toc = document.querySelector(settings.target);
-
-          // Create the table of contents
-          createTOC();
-        };
-
-        //
-        // Return Public APIs
-        //
-
-        return publicAPIMethods;
+        return Constructor;
       })();
 
       // Run the script
+      var toc = new TableOfContents();
+      toc.init();
     </script>
   </body>
 </html>
